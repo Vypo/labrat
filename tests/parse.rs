@@ -29,9 +29,11 @@ fn view_image() {
     ))
     .unwrap();
 
-    assert_eq!(view.submission().preview(), &preview);
-    assert_eq!(view.submission().fullview(), &full);
-    assert_eq!(view.submission().download(), &full);
+    let submission = view.submission();
+    assert_eq!(submission.preview(), &preview);
+    assert_eq!(submission.fullview(), &full);
+    assert_eq!(submission.download(), &full);
+    assert_eq!(submission.rating(), Rating::General);
 
     assert_eq!(view.category(), "All");
     assert_eq!(view.type_(), "All");
@@ -39,8 +41,6 @@ fn view_image() {
     assert_eq!(view.n_views(), 128);
     assert_eq!(view.n_comments(), 16);
     assert_eq!(view.n_favorites(), 25);
-
-    assert_eq!(view.rating(), Rating::General);
 
     let posted = NaiveDate::from_ymd(2020, 09, 23).and_hms(15, 52, 00);
     assert_eq!(view.posted(), posted);
@@ -125,9 +125,11 @@ fn view_story() {
     ))
     .unwrap();
 
-    assert_eq!(view.submission().preview(), &preview);
-    assert_eq!(view.submission().fullview(), &fullview);
-    assert_eq!(view.submission().download(), &download);
+    let submission = view.submission();
+    assert_eq!(submission.preview(), &preview);
+    assert_eq!(submission.fullview(), &fullview);
+    assert_eq!(submission.download(), &download);
+    assert_eq!(submission.rating(), Rating::Adult);
 
     assert_eq!(view.category(), "Story");
     assert_eq!(view.type_(), "All");
@@ -135,8 +137,6 @@ fn view_story() {
     assert_eq!(view.n_views(), 829);
     assert_eq!(view.n_comments(), 15);
     assert_eq!(view.n_favorites(), 25);
-
-    assert_eq!(view.rating(), Rating::Adult);
 
     let posted = NaiveDate::from_ymd(2020, 07, 27).and_hms(2, 52, 00);
     assert_eq!(view.posted(), posted);
@@ -222,9 +222,11 @@ fn view_flash() {
     ))
     .unwrap();
 
-    assert_eq!(view.submission().preview(), &preview);
-    assert_eq!(view.submission().fullview(), &full);
-    assert_eq!(view.submission().download(), &full);
+    let submission = view.submission();
+    assert_eq!(submission.preview(), &preview);
+    assert_eq!(submission.fullview(), &full);
+    assert_eq!(submission.download(), &full);
+    assert_eq!(submission.rating(), Rating::Adult);
 
     assert_eq!(view.category(), "Flash");
     assert_eq!(view.type_(), "General Furry Art");
@@ -232,8 +234,6 @@ fn view_flash() {
     assert_eq!(view.n_views(), 88524);
     assert_eq!(view.n_comments(), 76);
     assert_eq!(view.n_favorites(), 1860);
-
-    assert_eq!(view.rating(), Rating::Adult);
 
     let posted = NaiveDate::from_ymd(2013, 06, 09).and_hms(4, 33, 00);
     assert_eq!(view.posted(), posted);
@@ -332,9 +332,11 @@ fn view_music() {
     ))
     .unwrap();
 
-    assert_eq!(view.submission().preview(), &preview);
-    assert_eq!(view.submission().fullview(), &fullview);
-    assert_eq!(view.submission().download(), &download);
+    let submission = view.submission();
+    assert_eq!(submission.preview(), &preview);
+    assert_eq!(submission.fullview(), &fullview);
+    assert_eq!(submission.download(), &download);
+    assert_eq!(submission.rating(), Rating::Adult);
 
     assert_eq!(view.category(), "Music");
     assert_eq!(view.type_(), "Fetish Other");
@@ -342,8 +344,6 @@ fn view_music() {
     assert_eq!(view.n_views(), 1810);
     assert_eq!(view.n_comments(), 22);
     assert_eq!(view.n_favorites(), 51);
-
-    assert_eq!(view.rating(), Rating::Adult);
 
     let posted = NaiveDate::from_ymd(2019, 12, 15).and_hms(12, 48, 00);
     assert_eq!(view.posted(), posted);

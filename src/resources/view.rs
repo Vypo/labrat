@@ -18,9 +18,13 @@ use url::Url;
 
 #[derive(Debug, Clone)]
 pub struct Submission {
+    view_id: u64,
+
     fullview: Url,
     preview: Url,
     download: Url,
+
+    rating: Rating,
 }
 
 impl Submission {
@@ -35,12 +39,14 @@ impl Submission {
     pub fn download(&self) -> &Url {
         &self.download
     }
+
+    pub fn rating(&self) -> Rating {
+        self.rating
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct View {
-    view_id: u64,
-
     fav_key: Option<FavKey>,
     faved: Option<bool>,
 
@@ -54,8 +60,6 @@ pub struct View {
     n_views: u64,
     n_comments: u64,
     n_favorites: u64,
-
-    rating: Rating,
 
     posted: NaiveDateTime,
     title: String,
@@ -84,7 +88,7 @@ impl TryFrom<View> for FavKey {
 
 impl From<&View> for CommentReplyKey {
     fn from(v: &View) -> Self {
-        CommentReplyKey::view(v.view_id)
+        CommentReplyKey::view(v.submission.view_id)
     }
 }
 
@@ -96,13 +100,17 @@ impl From<View> for CommentReplyKey {
 
 impl From<&View> for ViewKey {
     fn from(v: &View) -> Self {
-        ViewKey { view_id: v.view_id }
+        ViewKey {
+            view_id: v.submission.view_id,
+        }
     }
 }
 
 impl From<View> for ViewKey {
     fn from(v: View) -> Self {
-        ViewKey { view_id: v.view_id }
+        ViewKey {
+            view_id: v.submission.view_id,
+        }
     }
 }
 
@@ -149,10 +157,6 @@ impl View {
 
     pub fn n_comments(&self) -> u64 {
         self.n_comments
-    }
-
-    pub fn rating(&self) -> Rating {
-        self.rating
     }
 
     pub fn posted(&self) -> NaiveDateTime {
@@ -408,13 +412,14 @@ impl FromHtml for View {
         };
 
         Ok(Self {
-            view_id,
             faved,
             fav_key,
             submission: Submission {
+                view_id,
                 preview,
                 fullview,
                 download,
+                rating,
             },
             category,
             type_,
@@ -422,7 +427,6 @@ impl FromHtml for View {
             n_views,
             n_comments,
             n_favorites,
-            rating,
             posted,
             title,
             description,
