@@ -56,6 +56,14 @@ impl Submissions {
         self.prev.as_ref()
     }
 
+    pub fn items(&self) -> &[Submission] {
+        self.items.as_slice()
+    }
+
+    pub fn into_items(self) -> Vec<Submission> {
+        self.items
+    }
+
     fn extract_nav(
         url: &Url,
         doc: &Html,
@@ -160,7 +168,6 @@ impl FromHtml for Submissions {
             let preview_attr = attr(preview_elem, "src")?;
             let preview = url.join(preview_attr)?;
 
-            eprintln!("{}", view_id);
             let sub_info = descriptions.remove(&view_id).unwrap();
 
             // TODO: sometimes it's a2.facdn.net instead.
