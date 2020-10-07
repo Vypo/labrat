@@ -50,6 +50,7 @@ pub use self::parse_error::ParseError;
 
 use snafu::OptionExt;
 
+use std::fmt;
 use std::str::FromStr;
 
 use url::Url;
@@ -58,8 +59,8 @@ use url::Url;
 pub struct UnauthenticatedError;
 impl std::error::Error for UnauthenticatedError {}
 
-impl std::fmt::Display for UnauthenticatedError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl fmt::Display for UnauthenticatedError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Unauthenticated")
     }
 }
@@ -123,6 +124,18 @@ pub enum Rating {
     General,
     Mature,
     Adult,
+}
+
+impl fmt::Display for Rating {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let txt = match self {
+            Rating::General => "General",
+            Rating::Mature => "Mature",
+            Rating::Adult => "Adult",
+        };
+
+        write!(f, "{}", txt)
+    }
 }
 
 impl FromStr for Rating {
