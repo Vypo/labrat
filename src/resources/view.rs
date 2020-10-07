@@ -7,43 +7,13 @@ use scraper::{ElementRef, Html, Selector};
 use snafu::{ensure, OptionExt};
 
 use std::convert::TryFrom;
-use std::str::FromStr;
 
 use super::{
-    parse_error, select_first, FromHtml, MiniUser, ParseError,
-    UnauthenticatedError,
+    parse_error, select_first, FromHtml, MiniUser, ParseError, Rating,
+    Submission, UnauthenticatedError,
 };
 
 use url::Url;
-
-#[derive(Debug, Clone)]
-pub struct Submission {
-    view_id: u64,
-
-    fullview: Url,
-    preview: Url,
-    download: Url,
-
-    rating: Rating,
-}
-
-impl Submission {
-    pub fn fullview(&self) -> &Url {
-        &self.fullview
-    }
-
-    pub fn preview(&self) -> &Url {
-        &self.preview
-    }
-
-    pub fn download(&self) -> &Url {
-        &self.download
-    }
-
-    pub fn rating(&self) -> Rating {
-        self.rating
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct View {
@@ -51,6 +21,8 @@ pub struct View {
     faved: Option<bool>,
 
     submission: Submission,
+    fullview: Url,
+    download: Url,
 
     category: String,
     type_: String,
@@ -62,10 +34,6 @@ pub struct View {
     n_favorites: u64,
 
     posted: NaiveDateTime,
-    title: String,
-    description: String,
-
-    artist: MiniUser,
 
     comments: Vec<CommentContainer>,
 }
@@ -131,6 +99,18 @@ impl View {
         &self.submission
     }
 
+    pub fn preview(&self) -> &Url {
+        self.submission.preview()
+    }
+
+    pub fn fullview(&self) -> &Url {
+        &self.fullview
+    }
+
+    pub fn download(&self) -> &Url {
+        &self.download
+    }
+
     pub fn faved(&self) -> Option<bool> {
         self.faved
     }
@@ -161,18 +141,6 @@ impl View {
 
     pub fn posted(&self) -> NaiveDateTime {
         self.posted
-    }
-
-    pub fn title(&self) -> &str {
-        &self.title
-    }
-
-    pub fn description(&self) -> &str {
-        &self.description
-    }
-
-    pub fn artist(&self) -> &MiniUser {
-        &self.artist
     }
 
     pub fn comments(&self) -> &[CommentContainer] {
@@ -417,10 +385,17 @@ impl FromHtml for View {
             submission: Submission {
                 view_id,
                 preview,
-                fullview,
-                download,
                 rating,
+                title,
+                description,
+                artist: MiniUser {
+                    avatar,
+                    name: user_name,
+                    slug: user_slug,
+                },
             },
+            fullview,
+            download,
             category,
             type_,
             tags,
@@ -428,35 +403,8 @@ impl FromHtml for View {
             n_comments,
             n_favorites,
             posted,
-            title,
-            description,
-            artist: MiniUser {
-                avatar,
-                name: user_name,
-                slug: user_slug,
-            },
             comments,
         })
-    }
-}
-
-#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
-pub enum Rating {
-    General,
-    Mature,
-    Adult,
-}
-
-impl FromStr for Rating {
-    type Err = ParseError;
-
-    fn from_str(text: &str) -> Result<Self, ParseError> {
-        match text {
-            "Adult" => Ok(Rating::Adult),
-            "Mature" => Ok(Rating::Mature),
-            "General" => Ok(Rating::General),
-            _ => Err(ParseError::UnknownRating { text: text.into() }),
-        }
     }
 }
 

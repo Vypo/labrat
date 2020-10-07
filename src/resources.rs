@@ -29,12 +29,17 @@ mod parse_error {
         InvalidDepth {
             style: String,
         },
+        #[snafu(context(false))]
+        Json {
+            source: serde_json::Error,
+        },
         #[snafu(display("adult/mature content is currently blocked"))]
         Nsfw,
     }
 }
 
 pub mod header;
+pub mod msg;
 pub mod view;
 
 use chrono::NaiveDateTime;
@@ -45,9 +50,10 @@ pub use self::parse_error::ParseError;
 
 use snafu::OptionExt;
 
+use std::str::FromStr;
+
 use url::Url;
 
-// TODO: Implement std::error::Error
 #[derive(Debug)]
 pub struct UnauthenticatedError;
 impl std::error::Error for UnauthenticatedError {}
@@ -111,6 +117,58 @@ fn select_first<'a>(
 }
 
 // TODO: Create a AsUserRef or somesuch trait that can be used to fetch a user
+
+#[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
+pub enum Rating {
+    General,
+    Mature,
+    Adult,
+}
+
+impl FromStr for Rating {
+    type Err = ParseError;
+
+    fn from_str(text: &str) -> Result<Self, ParseError> {
+        match text {
+            "Adult" => Ok(Rating::Adult),
+            "Mature" => Ok(Rating::Mature),
+            "General" => Ok(Rating::General),
+            _ => Err(ParseError::UnknownRating { text: text.into() }),
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Submission {
+    view_id: u64,
+    preview: Url,
+    rating: Rating,
+    title: String,
+    description: String,
+    artist: MiniUser,
+}
+
+impl Submission {
+    pub fn preview(&self) -> &Url {
+        &self.preview
+    }
+
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    pub fn rating(&self) -> Rating {
+        self.rating
+    }
+
+    pub fn artist(&self) -> &MiniUser {
+        &self.artist
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct MiniUser {

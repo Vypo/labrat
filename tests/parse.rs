@@ -1,9 +1,10 @@
 use chrono::NaiveDate;
 
-use labrat::keys::{CommentReplyKey, FavKey};
+use labrat::keys::{CommentReplyKey, FavKey, SubmissionsKey};
 use labrat::resources::header::Header;
-use labrat::resources::view::{Rating, View};
-use labrat::resources::{FromHtml, ParseError};
+use labrat::resources::msg::submissions::Submissions;
+use labrat::resources::view::View;
+use labrat::resources::{FromHtml, ParseError, Rating};
 
 use scraper::Html;
 
@@ -29,11 +30,20 @@ fn view_image() {
     ))
     .unwrap();
 
+    let avatar =
+        Url::parse("https://a2.facdn.net/1572271060/candykittycat.gif")
+            .unwrap();
+
     let submission = view.submission();
     assert_eq!(submission.preview(), &preview);
-    assert_eq!(submission.fullview(), &full);
-    assert_eq!(submission.download(), &full);
     assert_eq!(submission.rating(), Rating::General);
+    assert_eq!(submission.title(), "F2U Goat Base");
+    assert_eq!(submission.artist().avatar(), &avatar);
+    assert_eq!(submission.artist().slug(), "candykittycat");
+    assert_eq!(submission.artist().name(), "candykittycat");
+
+    assert_eq!(view.fullview(), &full);
+    assert_eq!(view.download(), &full);
 
     assert_eq!(view.category(), "All");
     assert_eq!(view.type_(), "All");
@@ -44,8 +54,6 @@ fn view_image() {
 
     let posted = NaiveDate::from_ymd(2020, 09, 23).and_hms(15, 52, 00);
     assert_eq!(view.posted(), posted);
-
-    assert_eq!(view.title(), "F2U Goat Base");
 
     assert_eq!(
         view.tags(),
@@ -61,14 +69,6 @@ fn view_image() {
             "base"
         ]
     );
-
-    let avatar =
-        Url::parse("https://a2.facdn.net/1572271060/candykittycat.gif")
-            .unwrap();
-    assert_eq!(view.artist().avatar(), &avatar);
-
-    assert_eq!(view.artist().slug(), "candykittycat");
-    assert_eq!(view.artist().name(), "candykittycat");
 
     assert_eq!(view.n_comments(), view.comments().len() as u64);
 
@@ -125,11 +125,19 @@ fn view_story() {
     ))
     .unwrap();
 
+    let avatar =
+        Url::parse("https://a2.facdn.net/1472366339/anubuskiren.gif").unwrap();
+
     let submission = view.submission();
     assert_eq!(submission.preview(), &preview);
-    assert_eq!(submission.fullview(), &fullview);
-    assert_eq!(submission.download(), &download);
     assert_eq!(submission.rating(), Rating::Adult);
+    assert_eq!(submission.title(), "Hypno School 03: Incursion");
+    assert_eq!(submission.artist().avatar(), &avatar);
+    assert_eq!(submission.artist().slug(), "anubuskiren");
+    assert_eq!(submission.artist().name(), "AnubusKiren");
+
+    assert_eq!(view.fullview(), &fullview);
+    assert_eq!(view.download(), &download);
 
     assert_eq!(view.category(), "Story");
     assert_eq!(view.type_(), "All");
@@ -140,8 +148,6 @@ fn view_story() {
 
     let posted = NaiveDate::from_ymd(2020, 07, 27).and_hms(2, 52, 00);
     assert_eq!(view.posted(), posted);
-
-    assert_eq!(view.title(), "Hypno School 03: Incursion");
 
     assert_eq!(
         view.tags(),
@@ -165,13 +171,6 @@ fn view_story() {
             "gay"
         ]
     );
-
-    let avatar =
-        Url::parse("https://a2.facdn.net/1472366339/anubuskiren.gif").unwrap();
-    assert_eq!(view.artist().avatar(), &avatar);
-
-    assert_eq!(view.artist().slug(), "anubuskiren");
-    assert_eq!(view.artist().name(), "AnubusKiren");
 
     assert_eq!(view.n_comments(), view.comments().len() as u64);
 
@@ -222,11 +221,19 @@ fn view_flash() {
     ))
     .unwrap();
 
+    let avatar =
+        Url::parse("https://a2.facdn.net/1543350598/jasonafex.gif").unwrap();
+
     let submission = view.submission();
     assert_eq!(submission.preview(), &preview);
-    assert_eq!(submission.fullview(), &full);
-    assert_eq!(submission.download(), &full);
     assert_eq!(submission.rating(), Rating::Adult);
+    assert_eq!(submission.title(), "Hypno Stuffing (Animated)");
+    assert_eq!(submission.artist().avatar(), &avatar);
+    assert_eq!(submission.artist().slug(), "jasonafex");
+    assert_eq!(submission.artist().name(), "Jasonafex");
+
+    assert_eq!(view.fullview(), &full);
+    assert_eq!(view.download(), &full);
 
     assert_eq!(view.category(), "Flash");
     assert_eq!(view.type_(), "General Furry Art");
@@ -237,8 +244,6 @@ fn view_flash() {
 
     let posted = NaiveDate::from_ymd(2013, 06, 09).and_hms(4, 33, 00);
     assert_eq!(view.posted(), posted);
-
-    assert_eq!(view.title(), "Hypno Stuffing (Animated)");
 
     assert_eq!(
         view.tags(),
@@ -269,13 +274,6 @@ fn view_flash() {
             "brand"
         ]
     );
-
-    let avatar =
-        Url::parse("https://a2.facdn.net/1543350598/jasonafex.gif").unwrap();
-    assert_eq!(view.artist().avatar(), &avatar);
-
-    assert_eq!(view.artist().slug(), "jasonafex");
-    assert_eq!(view.artist().name(), "Jasonafex");
 
     assert_eq!(view.n_comments(), view.comments().len() as u64);
 
@@ -332,11 +330,22 @@ fn view_music() {
     ))
     .unwrap();
 
+    let avatar =
+        Url::parse("https://a.facdn.net/1471329951/twelvetables.gif").unwrap();
+
     let submission = view.submission();
     assert_eq!(submission.preview(), &preview);
-    assert_eq!(submission.fullview(), &fullview);
-    assert_eq!(submission.download(), &download);
     assert_eq!(submission.rating(), Rating::Adult);
+    assert_eq!(
+        submission.title(),
+        "Real Hypnosis!  Hypno Pet 2: Mind of a Pet"
+    );
+    assert_eq!(submission.artist().avatar(), &avatar);
+    assert_eq!(submission.artist().slug(), "twelvetables");
+    assert_eq!(submission.artist().name(), "Twelvetables");
+
+    assert_eq!(view.fullview(), &fullview);
+    assert_eq!(view.download(), &download);
 
     assert_eq!(view.category(), "Music");
     assert_eq!(view.type_(), "Fetish Other");
@@ -347,8 +356,6 @@ fn view_music() {
 
     let posted = NaiveDate::from_ymd(2019, 12, 15).and_hms(12, 48, 00);
     assert_eq!(view.posted(), posted);
-
-    assert_eq!(view.title(), "Real Hypnosis!  Hypno Pet 2: Mind of a Pet");
 
     assert_eq!(
         view.tags(),
@@ -368,13 +375,6 @@ fn view_music() {
             "obedience"
         ]
     );
-
-    let avatar =
-        Url::parse("https://a.facdn.net/1471329951/twelvetables.gif").unwrap();
-    assert_eq!(view.artist().avatar(), &avatar);
-
-    assert_eq!(view.artist().slug(), "twelvetables");
-    assert_eq!(view.artist().name(), "Twelvetables");
 
     let fav_key = FavKey::try_from(&view).unwrap();
     let exp_fav = FavKey::try_from(
@@ -424,4 +424,46 @@ fn view_header() {
     assert_eq!(notifs.comments, 0);
     assert_eq!(notifs.watches, 0);
     assert_eq!(notifs.favorites, 0);
+}
+
+#[test]
+fn msg_submissions_next() {
+    let url =
+        Url::parse("https://www.furaffinity.net/msg/submissions/").unwrap();
+
+    let text = include_str!("resources/msg/submissions/next.html");
+    let html = Html::parse_document(text);
+
+    let page = Submissions::from_html(url, &html).unwrap();
+
+    let next_url = Url::parse(
+        "https://www.furaffinity.net/msg/submissions/new~12345678@72/",
+    )
+    .unwrap();
+    let next = SubmissionsKey::try_from(next_url).unwrap();
+
+    assert_eq!(page.next(), Some(&next));
+    assert_eq!(page.prev(), None);
+}
+
+#[test]
+fn msg_submissions_prev() {
+    let url = Url::parse(
+        "https://www.furaffinity.net/msg/submissions/new~12345678@72/",
+    )
+    .unwrap();
+
+    let text = include_str!("resources/msg/submissions/prev.html");
+    let html = Html::parse_document(text);
+
+    let page = Submissions::from_html(url, &html).unwrap();
+
+    let prev_url = Url::parse(
+        "https://www.furaffinity.net/msg/submissions/new~12345678@72/",
+    )
+    .unwrap();
+    let prev = SubmissionsKey::try_from(prev_url).unwrap();
+
+    assert_eq!(page.prev(), Some(&prev));
+    assert_eq!(page.next(), None);
 }

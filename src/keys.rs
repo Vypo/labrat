@@ -19,6 +19,8 @@ mod errors {
     }
 }
 
+use crate::resources::msg::submissions::Order;
+
 pub use self::errors::{FromStrError, FromUrlError};
 
 use snafu::{ensure, OptionExt, ResultExt};
@@ -26,6 +28,94 @@ use snafu::{ensure, OptionExt, ResultExt};
 use std::convert::{TryFrom, TryInto};
 
 use url::Url;
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+pub struct SubmissionsKey {
+    order: Order,
+    after: Option<u64>,
+}
+
+impl SubmissionsKey {
+    pub fn newest() -> Self {
+        Self {
+            order: Order::Descending,
+            after: None,
+        }
+    }
+
+    pub fn oldest() -> Self {
+        Self {
+            order: Order::Ascending,
+            after: None,
+        }
+    }
+}
+
+impl Default for SubmissionsKey {
+    fn default() -> Self {
+        Self::oldest()
+    }
+}
+
+impl TryFrom<Url> for SubmissionsKey {
+    type Error = FromUrlError;
+
+    fn try_from(u: Url) -> Result<Self, Self::Error> {
+        TryFrom::try_from(&u)
+    }
+}
+
+impl TryFrom<&Url> for SubmissionsKey {
+    type Error = FromUrlError;
+
+    fn try_from(u: &Url) -> Result<Self, Self::Error> {
+        let mut path = u.path_segments().context(errors::MissingSegment)?;
+        ensure!(path.next() == Some("msg"), errors::MissingSegment);
+        ensure!(path.next() == Some("submissions"), errors::MissingSegment);
+
+        let segment = match path.next() {
+            Some(t) => t,
+            None => return Ok(Self::default()),
+        };
+
+        let order_id =
+            segment.split('@').next().context(errors::MissingSegment)?;
+
+        let mut parts = order_id.split('~');
+        let order_txt = parts.next().context(errors::MissingSegment)?;
+
+        let order = match order_txt {
+            "new" => Order::Descending,
+            "old" => Order::Ascending,
+            _ => return Err(FromUrlError::MissingSegment),
+        };
+
+        let after = match parts.next() {
+            None => None,
+            Some(x) => Some(x.parse()?),
+        };
+
+        Ok(Self { order, after })
+    }
+}
+
+impl From<&SubmissionsKey> for Url {
+    fn from(k: &SubmissionsKey) -> Url {
+        let after = k.after.map(|id| format!("~{}", id)).unwrap_or_default();
+        let text = format!(
+            "https://www.furaffinity.net/msg/submissions/{}{}@72/",
+            k.order.text(),
+            after,
+        );
+        Url::parse(&text).unwrap()
+    }
+}
+
+impl From<SubmissionsKey> for Url {
+    fn from(k: SubmissionsKey) -> Url {
+        From::from(&k)
+    }
+}
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct FavKey {
@@ -283,6 +373,52 @@ impl From<ViewKey> for Url {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn submissions_key_from_new_id() {
+        let url = Url::parse(
+            "https://www.furaffinity.net/msg/submissions/new~38549204@48/",
+        )
+        .unwrap();
+
+        let actual = SubmissionsKey::try_from(url).unwrap();
+        let expected = SubmissionsKey {
+            order: Order::Descending,
+            after: Some(38549204),
+        };
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn submissions_key_from_newest() {
+        let url =
+            Url::parse("https://www.furaffinity.net/msg/submissions/new@48/")
+                .unwrap();
+
+        let actual = SubmissionsKey::try_from(url).unwrap();
+        let expected = SubmissionsKey {
+            order: Order::Descending,
+            after: None,
+        };
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn submissions_key_from_oldest() {
+        let url =
+            Url::parse("https://www.furaffinity.net/msg/submissions/old@48/")
+                .unwrap();
+
+        let actual = SubmissionsKey::try_from(url).unwrap();
+        let expected = SubmissionsKey {
+            order: Order::Ascending,
+            after: None,
+        };
+
+        assert_eq!(actual, expected);
+    }
 
     #[test]
     fn comment_reply_key_from_url_view_journal() {

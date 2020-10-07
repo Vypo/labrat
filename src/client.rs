@@ -32,8 +32,12 @@ mod errors {
     }
 }
 
-use crate::keys::{CommentReplyKey, FavKey, ViewKey};
+use crate::keys::{
+    CommentReplyKey, FavKey, FromStrError, FromUrlError, SubmissionsKey,
+    ViewKey,
+};
 use crate::resources::header::Header;
+use crate::resources::msg::submissions::Submissions;
 use crate::resources::view::View;
 use crate::resources::{FromHtml, ParseError};
 
@@ -48,11 +52,41 @@ use serde::Serialize;
 
 use snafu::{ensure, ResultExt};
 
-use std::convert::TryInto;
+use std::convert::{Infallible, TryInto};
 
 use tokio::sync::RwLock;
 
 use url::Url;
+
+impl From<RequestError<Infallible>> for RequestError<FromStrError> {
+    fn from(o: RequestError<Infallible>) -> Self {
+        match o {
+            RequestError::Unsuccessful { status } => {
+                RequestError::Unsuccessful { status }
+            }
+            RequestError::Reqwest { source } => {
+                RequestError::Reqwest { source }
+            }
+            RequestError::Parse { source } => RequestError::Parse { source },
+            RequestError::KeyError { .. } => unreachable!(),
+        }
+    }
+}
+
+impl From<RequestError<Infallible>> for RequestError<FromUrlError> {
+    fn from(o: RequestError<Infallible>) -> Self {
+        match o {
+            RequestError::Unsuccessful { status } => {
+                RequestError::Unsuccessful { status }
+            }
+            RequestError::Reqwest { source } => {
+                RequestError::Reqwest { source }
+            }
+            RequestError::Parse { source } => RequestError::Parse { source },
+            RequestError::KeyError { .. } => unreachable!(),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Response<V> {
@@ -238,5 +272,30 @@ impl Client {
         // TODO: check for errors in the HTML
 
         Ok(())
+    }
+
+    pub async fn submissions<K>(
+        &self,
+        key: K,
+    ) -> Result<Response<Submissions>, RequestError<K::Error>>
+    where
+        K: TryInto<SubmissionsKey>,
+        K::Error: 'static + std::error::Error,
+    {
+        let key = key.try_into().context(errors::KeyError)?;
+        let url = Url::from(key);
+
+        let response = self.client.read().await.get(url.clone()).send().await?;
+
+        ensure!(
+            response.status().is_success(),
+            errors::Unsuccessful {
+                status: response.status()
+            },
+        );
+
+        let text = response.text().await?;
+        let html = Html::parse_document(&text);
+        Ok(Response::from_html(url, &html).context(errors::Parse)?)
     }
 }
