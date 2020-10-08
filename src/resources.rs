@@ -161,6 +161,22 @@ pub struct Submission {
     artist: MiniUser,
 }
 
+impl From<Submission> for crate::keys::ViewKey {
+    fn from(sub: Submission) -> Self {
+        Self {
+            view_id: sub.view_id,
+        }
+    }
+}
+
+impl From<&Submission> for crate::keys::ViewKey {
+    fn from(sub: &Submission) -> Self {
+        Self {
+            view_id: sub.view_id,
+        }
+    }
+}
+
 impl Submission {
     pub fn preview(&self) -> &Url {
         &self.preview
