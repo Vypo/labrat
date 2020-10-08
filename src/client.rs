@@ -298,4 +298,47 @@ impl Client {
         let html = Html::parse_document(&text);
         Ok(Response::from_html(url, &html).context(errors::Parse)?)
     }
+
+    pub async fn clear_submissions<K, I>(
+        &self,
+        keys: I,
+    ) -> Result<(), RequestError<K::Error>>
+    where
+        K: TryInto<ViewKey>,
+        K::Error: 'static + std::error::Error,
+        I: IntoIterator<Item = K>,
+    {
+        let form = keys
+            .into_iter()
+            .map(|x| Ok(("submissions[]", x.try_into()?.view_id.to_string())))
+            .chain(std::iter::once(Ok((
+                "messagecenter-action",
+                "remove_checked".to_string(),
+            ))))
+            .collect::<Result<Vec<_>, _>>()
+            .context(errors::KeyError)?;
+
+        let url =
+            Url::parse("https://www.furaffinity.net/msg/submissions/").unwrap();
+
+        let response = self
+            .client
+            .read()
+            .await
+            .post(url)
+            .form(&form)
+            .send()
+            .await?;
+
+        ensure!(
+            response.status().is_success(),
+            errors::Unsuccessful {
+                status: response.status()
+            },
+        );
+
+        // TODO: Check actual HTML response
+
+        Ok(())
+    }
 }
