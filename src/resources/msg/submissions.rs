@@ -118,6 +118,14 @@ impl FromHtml for Submissions {
             .context(parse_error::MissingElement { selector: "script" })?
             .trim();
 
+        if descriptions_txt.starts_with("var descriptions = []") {
+            return Ok(Self {
+                next: None,
+                prev: None,
+                items: vec![],
+            });
+        }
+
         ensure!(
             descriptions_txt.starts_with("var descriptions = {"),
             parse_error::MissingElement { selector: "script" }
