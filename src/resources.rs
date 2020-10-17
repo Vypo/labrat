@@ -151,10 +151,24 @@ impl FromStr for Rating {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum PreviewSize {
+    Xxxs, // 50
+    Xxs,  // 100
+    Xs,   // 120
+    S,    // 150
+    M,    // 200
+    L,    // 250
+    Xl,   // 300
+    Xxl,  // 400
+    Xxxl, // 600
+}
+
 #[derive(Debug, Clone)]
 pub struct Submission {
     view_id: u64,
-    preview: Url,
+    created: u64,
+    cdn: Url,
     rating: Rating,
     title: String,
     description: String,
@@ -178,8 +192,21 @@ impl From<&Submission> for crate::keys::ViewKey {
 }
 
 impl Submission {
-    pub fn preview(&self) -> &Url {
-        &self.preview
+    pub fn preview(&self, sz: PreviewSize) -> Url {
+        let pixels = match sz {
+            PreviewSize::Xxxl => 600,
+            PreviewSize::Xxl => 400,
+            PreviewSize::Xl => 300,
+            PreviewSize::L => 250,
+            PreviewSize::M => 200,
+            PreviewSize::S => 150,
+            PreviewSize::Xs => 120,
+            PreviewSize::Xxs => 100,
+            PreviewSize::Xxxs => 50,
+        };
+
+        let path = format!("/{}@{}-{}.jpg", self.view_id, pixels, self.created);
+        self.cdn.join(&path).unwrap()
     }
 
     pub fn title(&self) -> &str {
@@ -196,6 +223,26 @@ impl Submission {
 
     pub fn artist(&self) -> &MiniUser {
         &self.artist
+    }
+
+    pub(crate) fn parse_url(url: &Url) -> Result<(Url, u64), ParseError> {
+        let root = url.join("./").unwrap();
+        let path = url
+            .path_segments()
+            .context(parse_error::IncorrectUrl)?
+            .last()
+            .context(parse_error::IncorrectUrl)?;
+
+        let after_sz = path
+            .splitn(2, '-')
+            .last()
+            .context(parse_error::IncorrectUrl)?;
+        let before_ext = after_sz
+            .splitn(2, '.')
+            .next()
+            .context(parse_error::IncorrectUrl)?;
+
+        Ok((root, before_ext.parse()?))
     }
 }
 

@@ -175,6 +175,7 @@ impl FromHtml for Submissions {
             let preview_elem = select_first_elem(figure_elem, "img")?;
             let preview_attr = attr(preview_elem, "src")?;
             let preview = url.join(preview_attr)?;
+            let (cdn, created) = Submission::parse_url(&preview)?;
 
             let sub_info = descriptions.remove(&view_id).unwrap();
 
@@ -189,7 +190,8 @@ impl FromHtml for Submissions {
             items.push(Submission {
                 view_id,
                 rating,
-                preview,
+                cdn,
+                created,
                 title: sub_info.title,
                 description: sub_info.description,
                 artist: MiniUser {

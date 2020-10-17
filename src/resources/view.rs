@@ -9,8 +9,8 @@ use snafu::{ensure, OptionExt};
 use std::convert::TryFrom;
 
 use super::{
-    parse_error, select_first, FromHtml, MiniUser, ParseError, Rating,
-    Submission, UnauthenticatedError,
+    parse_error, select_first, FromHtml, MiniUser, ParseError, PreviewSize,
+    Rating, Submission, UnauthenticatedError,
 };
 
 use url::Url;
@@ -99,8 +99,8 @@ impl View {
         &self.submission
     }
 
-    pub fn preview(&self) -> &Url {
-        self.submission.preview()
+    pub fn preview(&self, sz: PreviewSize) -> Url {
+        self.submission.preview(sz)
     }
 
     pub fn fullview(&self) -> &Url {
@@ -275,6 +275,8 @@ impl FromHtml for View {
             Err(e) => return Err(e),
         };
 
+        let (cdn, created) = Submission::parse_url(&preview)?;
+
         let mut segments =
             url.path_segments().context(parse_error::IncorrectUrl)?;
         ensure!(segments.next() == Some("view"), parse_error::IncorrectUrl);
@@ -384,7 +386,8 @@ impl FromHtml for View {
             fav_key,
             submission: Submission {
                 view_id,
-                preview,
+                created,
+                cdn,
                 rating,
                 title,
                 description,

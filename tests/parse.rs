@@ -4,7 +4,7 @@ use labrat::keys::{CommentReplyKey, FavKey, SubmissionsKey};
 use labrat::resources::header::Header;
 use labrat::resources::msg::submissions::Submissions;
 use labrat::resources::view::View;
-use labrat::resources::{FromHtml, ParseError, Rating};
+use labrat::resources::{FromHtml, ParseError, PreviewSize, Rating};
 
 use scraper::Html;
 
@@ -35,7 +35,7 @@ fn view_image() {
             .unwrap();
 
     let submission = view.submission();
-    assert_eq!(submission.preview(), &preview);
+    assert_eq!(submission.preview(PreviewSize::Xxl), preview);
     assert_eq!(submission.rating(), Rating::General);
     assert_eq!(submission.title(), "F2U Goat Base");
     assert_eq!(submission.artist().avatar(), &avatar);
@@ -129,7 +129,7 @@ fn view_story() {
         Url::parse("https://a2.facdn.net/1472366339/anubuskiren.gif").unwrap();
 
     let submission = view.submission();
-    assert_eq!(submission.preview(), &preview);
+    assert_eq!(submission.preview(PreviewSize::Xxl), preview);
     assert_eq!(submission.rating(), Rating::Adult);
     assert_eq!(submission.title(), "Hypno School 03: Incursion");
     assert_eq!(submission.artist().avatar(), &avatar);
@@ -225,7 +225,7 @@ fn view_flash() {
         Url::parse("https://a2.facdn.net/1543350598/jasonafex.gif").unwrap();
 
     let submission = view.submission();
-    assert_eq!(submission.preview(), &preview);
+    assert_eq!(submission.preview(PreviewSize::M), preview);
     assert_eq!(submission.rating(), Rating::Adult);
     assert_eq!(submission.title(), "Hypno Stuffing (Animated)");
     assert_eq!(submission.artist().avatar(), &avatar);
@@ -334,7 +334,7 @@ fn view_music() {
         Url::parse("https://a.facdn.net/1471329951/twelvetables.gif").unwrap();
 
     let submission = view.submission();
-    assert_eq!(submission.preview(), &preview);
+    assert_eq!(submission.preview(PreviewSize::Xxl), preview);
     assert_eq!(submission.rating(), Rating::Adult);
     assert_eq!(
         submission.title(),
