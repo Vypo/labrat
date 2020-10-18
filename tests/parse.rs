@@ -4,7 +4,9 @@ use labrat::keys::{CommentReplyKey, FavKey, SubmissionsKey};
 use labrat::resources::header::Header;
 use labrat::resources::msg::submissions::Submissions;
 use labrat::resources::view::View;
-use labrat::resources::{FromHtml, ParseError, PreviewSize, Rating};
+use labrat::resources::{
+    FromHtml, ParseError, PreviewSize, Rating, SubmissionKind,
+};
 
 use scraper::Html;
 
@@ -41,6 +43,7 @@ fn view_image() {
     assert_eq!(submission.artist().avatar(), &avatar);
     assert_eq!(submission.artist().slug(), "candykittycat");
     assert_eq!(submission.artist().name(), "candykittycat");
+    assert_eq!(submission.kind(), SubmissionKind::Image);
 
     assert_eq!(view.fullview(), &full);
     assert_eq!(view.download(), &full);
@@ -135,6 +138,7 @@ fn view_story() {
     assert_eq!(submission.artist().avatar(), &avatar);
     assert_eq!(submission.artist().slug(), "anubuskiren");
     assert_eq!(submission.artist().name(), "AnubusKiren");
+    assert_eq!(submission.kind(), SubmissionKind::Text);
 
     assert_eq!(view.fullview(), &fullview);
     assert_eq!(view.download(), &download);
@@ -231,6 +235,7 @@ fn view_flash() {
     assert_eq!(submission.artist().avatar(), &avatar);
     assert_eq!(submission.artist().slug(), "jasonafex");
     assert_eq!(submission.artist().name(), "Jasonafex");
+    assert_eq!(submission.kind(), SubmissionKind::Flash);
 
     assert_eq!(view.fullview(), &full);
     assert_eq!(view.download(), &full);
@@ -343,6 +348,7 @@ fn view_music() {
     assert_eq!(submission.artist().avatar(), &avatar);
     assert_eq!(submission.artist().slug(), "twelvetables");
     assert_eq!(submission.artist().name(), "Twelvetables");
+    assert_eq!(submission.kind(), SubmissionKind::Audio);
 
     assert_eq!(view.fullview(), &fullview);
     assert_eq!(view.download(), &download);

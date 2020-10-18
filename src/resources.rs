@@ -164,6 +164,14 @@ pub enum PreviewSize {
     Xxxl, // 600
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum SubmissionKind {
+    Image,
+    Flash,
+    Text,
+    Audio,
+}
+
 #[derive(Debug, Clone)]
 pub struct Submission {
     view_id: u64,
@@ -173,6 +181,7 @@ pub struct Submission {
     title: String,
     description: String,
     artist: MiniUser,
+    kind: SubmissionKind,
 }
 
 impl From<Submission> for crate::keys::ViewKey {
@@ -207,6 +216,10 @@ impl Submission {
 
         let path = format!("/{}@{}-{}.jpg", self.view_id, pixels, self.created);
         self.cdn.join(&path).unwrap()
+    }
+
+    pub fn kind(&self) -> SubmissionKind {
+        self.kind
     }
 
     pub fn title(&self) -> &str {

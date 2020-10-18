@@ -10,7 +10,7 @@ use std::convert::TryFrom;
 
 use super::{
     parse_error, select_first, FromHtml, MiniUser, ParseError, PreviewSize,
-    Rating, Submission, UnauthenticatedError,
+    Rating, Submission, SubmissionKind, UnauthenticatedError,
 };
 
 use url::Url;
@@ -283,6 +283,20 @@ impl FromHtml for View {
         let view_id_txt = segments.next().context(parse_error::IncorrectUrl)?;
         let view_id = view_id_txt.parse()?;
 
+        let kind_elem = select_first(doc, "#submission_page")?;
+        let kind_class = super::attr(kind_elem, "class")?;
+        let kind = if kind_class.contains("page-content-type-flash") {
+            SubmissionKind::Flash
+        } else if kind_class.contains("page-content-type-image") {
+            SubmissionKind::Image
+        } else if kind_class.contains("page-content-type-text") {
+            SubmissionKind::Text
+        } else if kind_class.contains("page-content-type-music") {
+            SubmissionKind::Audio
+        } else {
+            return Err(ParseError::MissingAttribute { attribute: "class" });
+        };
+
         let download_elem = select_first(doc, ".download a")?;
         let download_txt = super::attr(download_elem, "href")?;
         let download = url.join(download_txt)?;
@@ -385,6 +399,7 @@ impl FromHtml for View {
             faved,
             fav_key,
             submission: Submission {
+                kind,
                 view_id,
                 created,
                 cdn,

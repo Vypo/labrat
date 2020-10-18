@@ -8,7 +8,7 @@ use snafu::{ensure, OptionExt};
 
 use super::super::{
     attr, parse_error, select_first, select_first_elem, text, FromHtml,
-    MiniUser, ParseError, Rating, Submission,
+    MiniUser, ParseError, Rating, Submission, SubmissionKind,
 };
 
 use std::collections::HashMap;
@@ -164,6 +164,19 @@ impl FromHtml for Submissions {
                     attribute: "class",
                 });
             };
+            let kind = if class.contains("t-image") {
+                SubmissionKind::Image
+            } else if class.contains("t-flash") {
+                SubmissionKind::Flash
+            } else if class.contains("t-audio") {
+                SubmissionKind::Audio
+            } else if class.contains("t-text") {
+                SubmissionKind::Text
+            } else {
+                return Err(ParseError::MissingAttribute {
+                    attribute: "class",
+                });
+            };
 
             let id_attr = attr(figure_elem, "id")?;
             ensure!(
@@ -192,6 +205,7 @@ impl FromHtml for Submissions {
                 rating,
                 cdn,
                 created,
+                kind,
                 title: sub_info.title,
                 description: sub_info.description,
                 artist: MiniUser {
