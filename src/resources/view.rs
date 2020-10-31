@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 
+use crate::html::simplify;
 use crate::keys::{CommentReplyKey, FavKey, FromUrlError, ViewKey};
 
 use scraper::{ElementRef, Html, Selector};
@@ -335,7 +336,7 @@ impl FromHtml for View {
         let title = super::text(title_elem);
 
         let description_elem = select_first(doc, ".submission-description")?;
-        let description = description_elem.inner_html();
+        let description = simplify(&url, description_elem);
 
         let avatar_elem = select_first(doc, ".submission-id-avatar > a > img")?;
         let avatar_txt = super::attr(avatar_elem, "src")?;
