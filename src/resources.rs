@@ -75,6 +75,11 @@ fn datetime(elem: ElementRef) -> Result<NaiveDateTime, ParseError> {
         _ => text(elem),
     };
 
+    if let Ok(p) = NaiveDateTime::parse_from_str(&txt, "%b %e, %Y %I:%M %p") {
+        return Ok(p);
+    }
+
+    let txt = text(elem);
     Ok(NaiveDateTime::parse_from_str(&txt, "%b %e, %Y %I:%M %p")?)
 }
 

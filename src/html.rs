@@ -282,7 +282,8 @@ mod tests {
     #[test]
     fn simplify_anchor() {
         let actual = do_simplify("#anchor");
-        let exp = r#"<a href="https://www.furaffinity.net/view/1/%22">anchor</a>"#;
+        let exp =
+            r#"<a href="https://www.furaffinity.net/view/1/%22">anchor</a>"#;
         assert_eq!(actual, exp);
     }
 
