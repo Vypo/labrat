@@ -208,7 +208,7 @@ impl View {
 
         let text_res = super::select_first_elem(elem, ".comment_text");
         let text = match text_res {
-            Ok(t) => t.inner_html().trim().to_string(),
+            Ok(t) => crate::html::simplify(url, t),
             Err(ParseError::MissingElement { .. }) => {
                 return Ok(CommentContainer {
                     comment: None,
