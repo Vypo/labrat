@@ -94,6 +94,30 @@ pub struct Response<V> {
     pub page: V,
 }
 
+impl<V> Response<V>
+where
+    V: FromHtml,
+{
+    async fn from_response<E>(
+        response: reqwest::Response,
+    ) -> Result<Self, RequestError<E>>
+    where
+        E: 'static + std::error::Error,
+    {
+        ensure!(
+            response.status().is_success(),
+            errors::Unsuccessful {
+                status: response.status()
+            },
+        );
+
+        let url = response.url().clone();
+        let text = response.text().await?;
+        let html = Html::parse_document(&text);
+        Ok(Self::from_html(url, &html).context(errors::Parse)?)
+    }
+}
+
 impl<V> FromHtml for Response<V>
 where
     V: FromHtml,
@@ -170,17 +194,7 @@ impl Client {
         let url = Url::from(key);
 
         let response = self.client.read().await.get(url.clone()).send().await?;
-
-        ensure!(
-            response.status().is_success(),
-            errors::Unsuccessful {
-                status: response.status()
-            },
-        );
-
-        let text = response.text().await?;
-        let html = Html::parse_document(&text);
-        Ok(Response::from_html(url, &html).context(errors::Parse)?)
+        Response::from_response(response).await
     }
 
     pub async fn reply<K>(
@@ -231,7 +245,10 @@ impl Client {
         Ok(())
     }
 
-    pub async fn fav<K>(&self, view: K) -> Result<(), RequestError<K::Error>>
+    pub async fn fav<K>(
+        &self,
+        view: K,
+    ) -> Result<Response<View>, RequestError<K::Error>>
     where
         K: TryInto<FavKey>,
         K::Error: 'static + std::error::Error,
@@ -239,7 +256,10 @@ impl Client {
         self.maybe_fav(view, true).await
     }
 
-    pub async fn unfav<K>(&self, view: K) -> Result<(), RequestError<K::Error>>
+    pub async fn unfav<K>(
+        &self,
+        view: K,
+    ) -> Result<Response<View>, RequestError<K::Error>>
     where
         K: TryInto<FavKey>,
         K::Error: 'static + std::error::Error,
@@ -251,7 +271,7 @@ impl Client {
         &self,
         view: K,
         fav: bool,
-    ) -> Result<(), RequestError<K::Error>>
+    ) -> Result<Response<View>, RequestError<K::Error>>
     where
         K: TryInto<FavKey>,
         K::Error: 'static + std::error::Error,
@@ -261,17 +281,7 @@ impl Client {
         let url = Url::parse(&txt).unwrap();
 
         let response = self.client.read().await.get(url).send().await?;
-
-        ensure!(
-            response.status().is_success(),
-            errors::Unsuccessful {
-                status: response.status()
-            },
-        );
-
-        // TODO: check for errors in the HTML
-
-        Ok(())
+        Response::from_response(response).await
     }
 
     pub async fn submissions<K>(
@@ -286,17 +296,7 @@ impl Client {
         let url = Url::from(key);
 
         let response = self.client.read().await.get(url.clone()).send().await?;
-
-        ensure!(
-            response.status().is_success(),
-            errors::Unsuccessful {
-                status: response.status()
-            },
-        );
-
-        let text = response.text().await?;
-        let html = Html::parse_document(&text);
-        Ok(Response::from_html(url, &html).context(errors::Parse)?)
+        Response::from_response(response).await
     }
 
     pub async fn clear_submissions<K, I>(
