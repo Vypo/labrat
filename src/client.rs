@@ -33,10 +33,11 @@ mod errors {
 }
 
 use crate::keys::{
-    CommentReplyKey, FavKey, FromStrError, FromUrlError, SubmissionsKey,
-    ViewKey,
+    CommentReplyKey, FavKey, FromStrError, FromUrlError, JournalKey,
+    SubmissionsKey, ViewKey,
 };
 use crate::resources::header::Header;
+use crate::resources::journal::Journal;
 use crate::resources::msg::submissions::Submissions;
 use crate::resources::view::View;
 use crate::resources::{FromHtml, ParseError};
@@ -180,6 +181,21 @@ impl Client {
         let mut client = self.client.write().await;
         *client = Self::builder().default_headers(headers).build()?;
         Ok(())
+    }
+
+    pub async fn journal<K>(
+        &self,
+        key: K,
+    ) -> Result<Response<Journal>, RequestError<K::Error>>
+    where
+        K: TryInto<JournalKey>,
+        K::Error: 'static + std::error::Error,
+    {
+        let key = key.try_into().context(errors::KeyError)?;
+        let url = Url::from(key);
+
+        let response = self.client.read().await.get(url.clone()).send().await?;
+        Response::from_response(response).await
     }
 
     pub async fn view<K>(

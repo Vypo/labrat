@@ -2,6 +2,7 @@ use chrono::NaiveDate;
 
 use labrat::keys::{CommentReplyKey, FavKey, SubmissionsKey};
 use labrat::resources::header::Header;
+use labrat::resources::journal::Journal;
 use labrat::resources::msg::submissions::Submissions;
 use labrat::resources::view::View;
 use labrat::resources::{
@@ -472,4 +473,35 @@ fn msg_submissions_prev() {
 
     assert_eq!(page.prev(), Some(&prev));
     assert_eq!(page.next(), None);
+}
+
+#[test]
+fn journal_header_footer() {
+    let url =
+        Url::parse("https://www.furaffinity.net/journal/7777777").unwrap();
+
+    let text = include_str!("resources/journal/header_footer.html");
+    let html = Html::parse_document(text);
+
+    let page = Journal::from_html(url, &html).unwrap();
+
+    assert_eq!(page.title(), "Testing Comment Depth");
+    assert_eq!(page.journal_id(), 7777777);
+    assert_eq!(page.n_comments(), 27);
+
+    let posted = NaiveDate::from_ymd(2020, 09, 24).and_hms(20, 38, 00);
+    assert_eq!(page.posted(), posted);
+
+    let comments = page.comments();
+    assert_eq!(comments.len() as u64, page.n_comments());
+
+    let cc0 = &comments[0];
+    assert_eq!(cc0.depth(), 0);
+
+    let c0 = cc0.comment().unwrap();
+    assert_eq!(c0.parent_id(), None);
+    assert!(c0.text().contains("Top level"));
+
+    let c0_posted = NaiveDate::from_ymd(2020, 09, 24).and_hms(20, 38, 00);
+    assert_eq!(c0.posted(), c0_posted);
 }

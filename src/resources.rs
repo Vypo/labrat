@@ -38,7 +38,9 @@ mod parse_error {
     }
 }
 
+pub mod comment;
 pub mod header;
+pub mod journal;
 pub mod msg;
 pub mod view;
 

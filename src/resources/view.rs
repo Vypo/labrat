@@ -9,6 +9,7 @@ use snafu::{ensure, OptionExt};
 
 use std::convert::TryFrom;
 
+use super::comment::{CommentContainer, CommentRoot};
 use super::{
     parse_error, select_first, FromHtml, MiniUser, ParseError, PreviewSize,
     Rating, Submission, SubmissionKind, UnauthenticatedError,
@@ -178,87 +179,6 @@ impl View {
 
         Ok((preview, fullview))
     }
-
-    fn extract_width(elem: ElementRef) -> Result<u8, ParseError> {
-        let style = super::attr(elem, "style")?;
-        ensure!(
-            style.starts_with("width:"),
-            parse_error::InvalidDepth { style }
-        );
-        ensure!(style.ends_with('%'), parse_error::InvalidDepth { style });
-        ensure!(style.len() >= 8, parse_error::InvalidDepth { style });
-        ensure!(style.len() <= 10, parse_error::InvalidDepth { style });
-
-        let width_txt = &style[6..style.len() - 1];
-        Ok(width_txt.parse()?)
-    }
-
-    fn extract_comment(
-        url: &Url,
-        view_id: u64,
-        elem: ElementRef,
-    ) -> Result<CommentContainer, ParseError> {
-        let width = Self::extract_width(elem)?;
-        let depth = (100 - width) / 3;
-
-        let id_elem =
-            super::select_first_elem(elem, "a.comment_anchor[id^='cid:']")?;
-        let id_txt = &super::attr(id_elem, "id")?[4..];
-        let comment_id: u64 = id_txt.parse()?;
-
-        let text_res = super::select_first_elem(elem, ".comment_text");
-        let text = match text_res {
-            Ok(t) => crate::html::simplify(url, t),
-            Err(ParseError::MissingElement { .. }) => {
-                return Ok(CommentContainer {
-                    comment: None,
-                    comment_id,
-                    view_id,
-                    depth,
-                });
-            }
-            Err(e) => return Err(e),
-        };
-
-        let parent_res = super::select_first_elem(elem, "a.comment-parent");
-        let parent_id = match parent_res {
-            Ok(p) => {
-                let href = super::attr(p, "href")?;
-                ensure!(
-                    href.starts_with("#cid:"),
-                    parse_error::MissingAttribute { attribute: "href" }
-                );
-                let parent_id_txt = &href[5..];
-                Some(parent_id_txt.parse::<u64>()?)
-            }
-            Err(ParseError::MissingElement { .. }) => None,
-            Err(e) => return Err(e),
-        };
-        let posted_elem =
-            super::select_first_elem(elem, ".comment-date .popup_date")?;
-        let posted = super::datetime(posted_elem)?;
-
-        let avatar_elem =
-            super::select_first_elem(elem, "img.comment_useravatar")?;
-        let avatar = url.join(super::attr(avatar_elem, "src")?)?;
-
-        let slug = super::attr(avatar_elem, "alt")?.to_string();
-
-        let name_elem = super::select_first_elem(elem, ".comment_username h3")?;
-        let name = super::text(name_elem);
-
-        Ok(CommentContainer {
-            depth,
-            view_id,
-            comment_id,
-            comment: Some(Comment {
-                parent_id,
-                text,
-                posted,
-                commenter: MiniUser { avatar, slug, name },
-            }),
-        })
-    }
 }
 
 impl FromHtml for View {
@@ -283,6 +203,7 @@ impl FromHtml for View {
         ensure!(segments.next() == Some("view"), parse_error::IncorrectUrl);
         let view_id_txt = segments.next().context(parse_error::IncorrectUrl)?;
         let view_id = view_id_txt.parse()?;
+        let comment_root = CommentRoot::View(view_id);
 
         let kind_elem = select_first(doc, "#submission_page")?;
         let kind_class = super::attr(kind_elem, "class")?;
@@ -335,6 +256,8 @@ impl FromHtml for View {
         )?;
         let title = super::text(title_elem);
 
+        // TODO: Handle the submission footer separately.
+
         let description_elem = select_first(doc, ".submission-description")?;
         let description = simplify(&url, description_elem);
 
@@ -357,7 +280,7 @@ impl FromHtml for View {
             Selector::parse("#comments-submission .comment_container").unwrap();
         let comments = doc
             .select(&comment_sel)
-            .map(|c| Self::extract_comment(&url, view_id, c))
+            .map(|c| CommentContainer::extract(&url, comment_root, c))
             .collect::<Result<Vec<_>, _>>()?;
 
         let fav_res = select_first(doc, ".favorite-nav a[href^='/fav/']");
@@ -424,62 +347,5 @@ impl FromHtml for View {
             posted,
             comments,
         })
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct CommentContainer {
-    view_id: u64,
-    comment_id: u64,
-
-    depth: u8,
-    comment: Option<Comment>,
-}
-
-impl From<CommentContainer> for CommentReplyKey {
-    fn from(c: CommentContainer) -> CommentReplyKey {
-        From::from(&c)
-    }
-}
-
-impl From<&CommentContainer> for CommentReplyKey {
-    fn from(c: &CommentContainer) -> CommentReplyKey {
-        Self::view_comment(c.comment_id)
-    }
-}
-
-impl CommentContainer {
-    pub fn depth(&self) -> u8 {
-        self.depth
-    }
-
-    pub fn comment(&self) -> Option<&Comment> {
-        self.comment.as_ref()
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Comment {
-    parent_id: Option<u64>,
-    commenter: MiniUser,
-    posted: NaiveDateTime,
-    text: String,
-}
-
-impl Comment {
-    pub fn parent_id(&self) -> Option<u64> {
-        self.parent_id
-    }
-
-    pub fn commenter(&self) -> &MiniUser {
-        &self.commenter
-    }
-
-    pub fn posted(&self) -> NaiveDateTime {
-        self.posted
-    }
-
-    pub fn text(&self) -> &str {
-        &self.text
     }
 }

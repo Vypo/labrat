@@ -25,5 +25,13 @@ async fn main() -> Result<(), Error> {
 
     println!("{:#?}", view);
 
+    let journal = client
+        .journal("https://www.furaffinity.net/journal/6740803/")
+        .await
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)
+        .context(Request)?;
+
+    println!("{:#?}", journal);
+
     Ok(())
 }

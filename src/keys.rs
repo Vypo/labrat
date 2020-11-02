@@ -273,6 +273,12 @@ pub struct CommentReplyKey {
 }
 
 impl CommentReplyKey {
+    pub(crate) fn journal(id: u64) -> Self {
+        Self {
+            reply_to: ReplyTo::Journal(id),
+        }
+    }
+
     pub(crate) fn view(id: u64) -> Self {
         Self {
             reply_to: ReplyTo::View(id),
@@ -282,6 +288,12 @@ impl CommentReplyKey {
     pub(crate) fn view_comment(cid: u64) -> Self {
         Self {
             reply_to: ReplyTo::ViewComment(cid),
+        }
+    }
+
+    pub(crate) fn journal_comment(cid: u64) -> Self {
+        Self {
+            reply_to: ReplyTo::JournalComment(cid),
         }
     }
 }
@@ -322,6 +334,52 @@ impl From<&CommentReplyKey> for Url {
 impl From<CommentReplyKey> for Url {
     fn from(key: CommentReplyKey) -> Url {
         Url::from(key.reply_to)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct JournalKey {
+    pub journal_id: u64,
+}
+
+impl TryFrom<Url> for JournalKey {
+    type Error = FromUrlError;
+
+    fn try_from(url: Url) -> Result<Self, Self::Error> {
+        TryFrom::try_from(&url)
+    }
+}
+
+impl TryFrom<&Url> for JournalKey {
+    type Error = FromUrlError;
+
+    fn try_from(url: &Url) -> Result<Self, Self::Error> {
+        let mut segments =
+            url.path_segments().context(errors::MissingSegment)?;
+
+        ensure!(segments.next() == Some("journal"), errors::MissingSegment);
+
+        let text = segments.next().context(errors::MissingSegment)?;
+        let journal_id = text.parse()?;
+
+        Ok(JournalKey { journal_id })
+    }
+}
+
+impl TryFrom<&str> for JournalKey {
+    type Error = FromStrError;
+
+    fn try_from(txt: &str) -> Result<Self, Self::Error> {
+        let url = Url::parse(txt).context(errors::MalformedUrl)?;
+        url.try_into().context(errors::FromUrl)
+    }
+}
+
+impl From<JournalKey> for Url {
+    fn from(key: JournalKey) -> Url {
+        let txt =
+            format!("https://www.furaffinity.net/journal/{}/", key.journal_id);
+        Url::parse(&txt).unwrap()
     }
 }
 
