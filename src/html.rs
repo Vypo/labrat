@@ -31,7 +31,7 @@ fn simplify_open(root: &Url, output: &mut String, node: NodeRef<Node>) {
         Node::Doctype(_) => (),
         Node::Text(txt) => simplify_open_text(output, txt),
         Node::Element(elem) => simplify_open_element(root, output, elem),
-        Node::ProcessingInstruction(_) => eprintln!("OPEN pi"),
+        Node::ProcessingInstruction(_) => (),
     }
 }
 

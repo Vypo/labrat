@@ -3,6 +3,7 @@ use chrono::NaiveDate;
 use labrat::keys::{CommentReplyKey, FavKey, SubmissionsKey};
 use labrat::resources::header::Header;
 use labrat::resources::journal::Journal;
+use labrat::resources::msg::others::Others;
 use labrat::resources::msg::submissions::Submissions;
 use labrat::resources::view::View;
 use labrat::resources::{
@@ -504,4 +505,85 @@ fn journal_header_footer() {
 
     let c0_posted = NaiveDate::from_ymd(2020, 09, 24).and_hms(20, 38, 00);
     assert_eq!(c0.posted(), c0_posted);
+}
+
+#[test]
+fn msg_others() {
+    let url = Url::parse("https://www.furaffinity.net/msg/others/").unwrap();
+
+    let text = include_str!("resources/msg/others/others.html");
+    let html = Html::parse_document(text);
+
+    let page = Others::from_html(url, &html).unwrap();
+
+    let watches = page.watches();
+    assert_eq!(watches.len(), 6);
+
+    let w0 = watches[0].watch().unwrap();
+    let a0 = Url::parse("https://a.facdn.net/12345/afakeuser00.gif").unwrap();
+
+    assert_eq!(w0.user().slug(), "afakeuser00");
+    assert_eq!(w0.user().name(), "aFakeUser00");
+    assert_eq!(w0.user().avatar(), &a0);
+
+    let w1 = watches[1].watch().unwrap();
+    let a1 = Url::parse("https://a.facdn.net/12345/afakeuser02.gif").unwrap();
+
+    assert_eq!(w1.user().slug(), "afakeuser02");
+    assert_eq!(w1.user().name(), "aFakeUser02");
+    assert_eq!(w1.user().avatar(), &a1);
+
+    assert!(watches[4].watch().is_none());
+
+    let cmts = page.comments();
+    assert_eq!(cmts.len(), 2);
+
+    assert!(cmts[0].comment().is_none());
+
+    let c1 = cmts[1].comment().unwrap();
+    let ca1 = Url::parse("https://a.facdn.net/afakeuser05.gif").unwrap();
+
+    assert_eq!(c1.title(), "Testing Comment Depth");
+    assert_eq!(c1.as_view_key(), None);
+    c1.as_journal_key().unwrap();
+
+    assert_eq!(c1.author().slug(), "afakeuser05");
+    assert_eq!(c1.author().name(), "aFakeUser05");
+    assert_eq!(c1.author().avatar(), &ca1);
+
+    let shouts = page.shouts();
+    assert_eq!(shouts.len(), 3);
+
+    assert!(shouts[2].shout().is_none());
+
+    let s0 = shouts[0].shout().unwrap();
+    let sa0 = Url::parse("https://a.facdn.net/tehkey.gif").unwrap();
+
+    assert_eq!(s0.author().slug(), "tehkey");
+    assert_eq!(s0.author().name(), "TehKey");
+    assert_eq!(s0.author().avatar(), &sa0);
+
+    let jrnls = page.journals();
+    assert_eq!(75, jrnls.len());
+
+    let j9 = &jrnls[7];
+    assert_eq!(j9.title(), "Fall/Winter Icons?");
+    assert_eq!(
+        j9.posted(),
+        NaiveDate::from_ymd(2020, 11, 12).and_hms(16, 45, 00)
+    );
+    assert_eq!(j9.author().name(), "Silberry");
+    assert_eq!(j9.author().slug(), "silberry");
+
+    let faves = page.favorites();
+    assert_eq!(1, faves.len());
+
+    let f0 = &faves[0];
+    assert_eq!(f0.title(), "Bewbs");
+    assert_eq!(
+        f0.when(),
+        NaiveDate::from_ymd(2020, 04, 21).and_hms(15, 45, 00)
+    );
+    assert_eq!(f0.user().name(), "aFakeUser06");
+    assert_eq!(f0.user().slug(), "afakeuser06");
 }

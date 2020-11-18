@@ -46,6 +46,8 @@ pub mod view;
 
 use chrono::NaiveDateTime;
 
+use regex::Regex;
+
 use scraper::{ElementRef, Html, Selector};
 
 pub use self::parse_error::ParseError;
@@ -71,18 +73,28 @@ pub trait FromHtml: Sized {
     fn from_html(url: Url, document: &Html) -> Result<Self, ParseError>;
 }
 
+lazy_static::lazy_static! {
+    static ref RE_DATETIME: Regex =
+        Regex::new("(?:^on )|(?P<d>[0-9]+)(?:st|th|nd|rd)").unwrap();
+}
+
+fn datetime_from_str(txt: &str) -> Result<NaiveDateTime, chrono::ParseError> {
+    let cleaned = RE_DATETIME.replace(txt, "$d");
+    NaiveDateTime::parse_from_str(&cleaned, "%b %e, %Y %I:%M %p")
+}
+
 fn datetime(elem: ElementRef) -> Result<NaiveDateTime, ParseError> {
     let txt = match attr(elem, "title") {
         Ok(title) => title.to_string(),
         _ => text(elem),
     };
 
-    if let Ok(p) = NaiveDateTime::parse_from_str(&txt, "%b %e, %Y %I:%M %p") {
+    if let Ok(p) = datetime_from_str(&txt) {
         return Ok(p);
     }
 
     let txt = text(elem);
-    Ok(NaiveDateTime::parse_from_str(&txt, "%b %e, %Y %I:%M %p")?)
+    Ok(datetime_from_str(&txt)?)
 }
 
 fn number(elem: ElementRef) -> Result<u64, ParseError> {
@@ -284,5 +296,15 @@ impl MiniUser {
 
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    pub(crate) fn without_avatar(name: String, slug: String) -> Self {
+        // TODO: Sometimes the domain is a2.facdn.net
+        Self {
+            avatar: Url::parse(&format!("https://a.facdn.net/{}.gif", slug))
+                .unwrap(),
+            slug,
+            name,
+        }
     }
 }
