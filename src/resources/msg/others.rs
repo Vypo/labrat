@@ -209,7 +209,7 @@ impl MiniJournal {
 impl From<&MiniJournal> for JournalKey {
     fn from(j: &MiniJournal) -> JournalKey {
         Self {
-            journal_id: j.journal_id
+            journal_id: j.journal_id,
         }
     }
 }

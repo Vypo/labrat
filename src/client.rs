@@ -38,6 +38,7 @@ use crate::keys::{
 };
 use crate::resources::header::Header;
 use crate::resources::journal::Journal;
+use crate::resources::msg::others::Others;
 use crate::resources::msg::submissions::Submissions;
 use crate::resources::view::View;
 use crate::resources::{FromHtml, ParseError};
@@ -297,6 +298,15 @@ impl Client {
         let url = Url::parse(&txt).unwrap();
 
         let response = self.client.read().await.get(url).send().await?;
+        Response::from_response(response).await
+    }
+
+    pub async fn others(
+        &self,
+    ) -> Result<Response<Others>, RequestError<Infallible>> {
+        let url = Url::parse("https://www.furaffinity.net/msg/others").unwrap();
+
+        let response = self.client.read().await.get(url.clone()).send().await?;
         Response::from_response(response).await
     }
 
