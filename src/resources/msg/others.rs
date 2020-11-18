@@ -206,6 +206,20 @@ impl MiniJournal {
     }
 }
 
+impl From<&MiniJournal> for JournalKey {
+    fn from(j: &MiniJournal) -> JournalKey {
+        Self {
+            journal_id: j.journal_id
+        }
+    }
+}
+
+impl From<MiniJournal> for JournalKey {
+    fn from(j: MiniJournal) -> JournalKey {
+        Self::from(&j)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct MiniShout {
     author: MiniUser,
