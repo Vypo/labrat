@@ -383,7 +383,7 @@ impl From<JournalKey> for Url {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, PartialOrd, Ord)]
 pub struct ViewKey {
     pub view_id: u64,
 }
