@@ -51,6 +51,24 @@ impl SubmissionsKey {
     }
 }
 
+impl PartialOrd for SubmissionsKey {
+    fn partial_cmp(&self, rhs: &Self) -> Option<std::cmp::Ordering> {
+        if self.order != rhs.order {
+            return None;
+        }
+
+        let ord = match (self.order, self.after, rhs.after) {
+            (_, None, None) => std::cmp::Ordering::Equal,
+            (_, None, _) => std::cmp::Ordering::Less,
+            (_, _, None) => std::cmp::Ordering::Greater,
+            (Order::Ascending, Some(l), Some(r)) => l.cmp(&r),
+            (Order::Descending, Some(l), Some(r)) => r.cmp(&l),
+        };
+
+        Some(ord)
+    }
+}
+
 impl Default for SubmissionsKey {
     fn default() -> Self {
         Self::oldest()
@@ -431,6 +449,70 @@ impl From<ViewKey> for Url {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn submissions_key_ord_desc_none() {
+        let none = SubmissionsKey {
+            order: Order::Descending,
+            after: None,
+        };
+
+        let some = SubmissionsKey {
+            order: Order::Descending,
+            after: Some(1),
+        };
+
+        assert!(none < some);
+        assert!(some > none);
+    }
+
+    #[test]
+    fn submissions_key_ord_asc_none() {
+        let none = SubmissionsKey {
+            order: Order::Ascending,
+            after: None,
+        };
+
+        let some = SubmissionsKey {
+            order: Order::Ascending,
+            after: Some(1),
+        };
+
+        assert!(none < some);
+        assert!(some > none);
+    }
+
+    #[test]
+    fn submissions_key_ord_asc() {
+        let less = SubmissionsKey {
+            order: Order::Ascending,
+            after: Some(1),
+        };
+
+        let more = SubmissionsKey {
+            order: Order::Ascending,
+            after: Some(2),
+        };
+
+        assert!(less < more);
+        assert!(more > less);
+    }
+
+    #[test]
+    fn submissions_key_ord_desc() {
+        let less = SubmissionsKey {
+            order: Order::Descending,
+            after: Some(2),
+        };
+
+        let more = SubmissionsKey {
+            order: Order::Descending,
+            after: Some(1),
+        };
+
+        assert!(less < more);
+        assert!(more > less);
+    }
 
     #[test]
     fn submissions_key_from_new_id() {
