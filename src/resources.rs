@@ -257,6 +257,11 @@ impl Submission {
         &self.artist
     }
 
+    pub fn created(&self) -> NaiveDateTime {
+        NaiveDateTime::from_timestamp_opt(self.created as i64, 0)
+            .unwrap_or_else(|| NaiveDateTime::from_timestamp(0, 0))
+    }
+
     pub(crate) fn parse_url(url: &Url) -> Result<(Url, u64), ParseError> {
         let root = url.join("./").unwrap();
         let path = url
