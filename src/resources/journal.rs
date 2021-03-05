@@ -121,8 +121,8 @@ impl FromHtml for Journal {
         let slug_elem =
             select_first(doc, "#user-profile .user-nav a[href^='/user/']")?;
         let slug_attr = &super::attr(slug_elem, "href")?[6..];
-        let slug = if slug_attr.ends_with('/') {
-            &slug_attr[..slug_attr.len() - 1]
+        let slug = if let Some(stripped) = slug_attr.strip_suffix('/') {
+            stripped
         } else {
             slug_attr
         };
