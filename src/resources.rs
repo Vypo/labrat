@@ -42,6 +42,7 @@ pub mod comment;
 pub mod header;
 pub mod journal;
 pub mod msg;
+pub mod user;
 pub mod view;
 
 use chrono::NaiveDateTime;
